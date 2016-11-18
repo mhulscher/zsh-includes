@@ -1,5 +1,8 @@
 # HOWTO
 
+Copy the `knsmon` script to your path.
+
+
 Add the following to your .zshrc:
 
 ```
