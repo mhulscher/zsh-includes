@@ -1,6 +1,7 @@
 # cluster mgmt functions
 
 alias applogs='stern --namespace=`basename $PWD`'
+alias apps-from-deis="deis apps | grep -v '=== Apps' | xargs mkdir -v 2>/dev/null"
 
 function use-cluster {
   if [[ ${#@} -eq 0 ]]; then
