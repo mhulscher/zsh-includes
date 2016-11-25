@@ -1,5 +1,8 @@
 # cluster mgmt functions
 
+alias ktopmem="watch -t 'kubectl top pods --all-namespaces | sort -rnk4'"
+alias ktopcpu="watch -t 'kubectl top pods --all-namespaces | sort -rnk3'"
+
 alias applogs='stern --namespace=`basename $PWD`'
 alias apps-from-deis="deis apps | grep -v '=== Apps' | xargs mkdir -v 2>/dev/null"
 
