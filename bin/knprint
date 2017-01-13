@@ -23,14 +23,14 @@ my $gpu = 0;
 
 foreach my $node (@{$data->{'items'}}) {
   $cpu += $node->{'status'}{'capacity'}{'cpu'};
-  $mem += (map { s/Ki$//; int($_ / 1024000) } $node->{'status'}{'capacity'}{'memory'})[0];
+  $mem += (map { s/Ki$//; int($_ / 1000000) } $node->{'status'}{'capacity'}{'memory'})[0];
   $pod += $node->{'status'}{'capacity'}{'pods'};
   $gpu += $node->{'status'}{'capacity'}{'alpha.kubernetes.io/nvidia-gpu'};
 
   $tb->addRow([
       $node->{'metadata'}{'name'},
       "CPU: " . $node->{'status'}{'capacity'}{'cpu'} . "\n" .
-      "MEM: " . (map { s/Ki$//; int($_ / 1024000) . "G" } $node->{'status'}{'capacity'}{'memory'})[0] . "\n" .
+      "MEM: " . (map { s/Ki$//; int($_ / 1000000) . "G" } $node->{'status'}{'capacity'}{'memory'})[0] . "\n" .
       "POD: " . $node->{'status'}{'capacity'}{'pods'} . "\n" .
       "GPU: " . $node->{'status'}{'capacity'}{'alpha.kubernetes.io/nvidia-gpu'},
       join("\n", map { "$_: " . $node->{'metadata'}{'labels'}{$_} } sort keys %{$node->{'metadata'}{'labels'}}),
