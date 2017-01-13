@@ -8,11 +8,25 @@ use Text::ASCIITable;
 
 my $data = decode_json(`kubectl get nodes -o json | jq -Mc .`);
 
+my $cl = Text::ASCIITable->new();
+$cl->setCols(qw(CPU MEM POD GPU));
+$cl->setOptions(headingText => 'Cluster Resources');
+
 my $tb = Text::ASCIITable->new();
 $tb->setCols('Node','Capacity','Labels','Annotations');
 $tb->setOptions(drawRowLine => 1);
 
+my $cpu = 0;
+my $mem = 0;
+my $pod = 0;
+my $gpu = 0;
+
 foreach my $node (@{$data->{'items'}}) {
+  $cpu += $node->{'status'}{'capacity'}{'cpu'};
+  $mem += (map { s/Ki$//; int($_ / 1024000) } $node->{'status'}{'capacity'}{'memory'})[0];
+  $pod += $node->{'status'}{'capacity'}{'pods'};
+  $gpu += $node->{'status'}{'capacity'}{'alpha.kubernetes.io/nvidia-gpu'};
+
   $tb->addRow([
       $node->{'metadata'}{'name'},
       "CPU: " . $node->{'status'}{'capacity'}{'cpu'} . "\n" .
@@ -24,4 +38,6 @@ foreach my $node (@{$data->{'items'}}) {
     ]);
 }
 
+$cl->addRow($cpu, $mem . "G", $pod, $gpu);
+print $cl;
 print $tb;
