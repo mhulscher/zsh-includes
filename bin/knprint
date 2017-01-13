@@ -1,0 +1,27 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+
+use JSON;
+use Text::ASCIITable;
+
+my $data = decode_json(`kubectl get nodes -o json | jq -Mc .`);
+
+my $tb = Text::ASCIITable->new();
+$tb->setCols('Node','Capacity','Labels','Annotations');
+$tb->setOptions(drawRowLine => 1);
+
+foreach my $node (@{$data->{'items'}}) {
+  $tb->addRow([
+      $node->{'metadata'}{'name'},
+      "CPU: " . $node->{'status'}{'capacity'}{'cpu'} . "\n" .
+      "MEM: " . (map { s/Ki$//; int($_ / 1024000) . "G" } $node->{'status'}{'capacity'}{'memory'})[0] . "\n" .
+      "POD: " . $node->{'status'}{'capacity'}{'pods'} . "\n" .
+      "GPU: " . $node->{'status'}{'capacity'}{'alpha.kubernetes.io/nvidia-gpu'},
+      join("\n", map { "$_: " . $node->{'metadata'}{'labels'}{$_} } keys %{$node->{'metadata'}{'labels'}}),
+      join("\n", map { "$_: " . $node->{'metadata'}{'annotations'}{$_} } keys %{$node->{'metadata'}{'annotations'}}),
+    ]);
+}
+
+print $tb;
