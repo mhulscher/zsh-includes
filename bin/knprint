@@ -33,8 +33,8 @@ foreach my $node (@{$data->{'items'}}) {
       "MEM: " . (map { s/Ki$//; int($_ / 1024000) . "G" } $node->{'status'}{'capacity'}{'memory'})[0] . "\n" .
       "POD: " . $node->{'status'}{'capacity'}{'pods'} . "\n" .
       "GPU: " . $node->{'status'}{'capacity'}{'alpha.kubernetes.io/nvidia-gpu'},
-      join("\n", map { "$_: " . $node->{'metadata'}{'labels'}{$_} } keys %{$node->{'metadata'}{'labels'}}),
-      join("\n", map { "$_: " . $node->{'metadata'}{'annotations'}{$_} } keys %{$node->{'metadata'}{'annotations'}}),
+      join("\n", map { "$_: " . $node->{'metadata'}{'labels'}{$_} } sort keys %{$node->{'metadata'}{'labels'}}),
+      join("\n", map { "$_: " . $node->{'metadata'}{'annotations'}{$_} } sort keys %{$node->{'metadata'}{'annotations'}}),
     ]);
 }
 
