@@ -1,9 +1,10 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 
 use strict;
 use warnings;
 
 use JSON;
+use Math::Round;
 use Text::ASCIITable;
 
 my $data = decode_json(`kubectl get nodes -o json | jq -Mc .`);
@@ -30,7 +31,7 @@ foreach my $node (@{$data->{'items'}}) {
   $tb->addRow([
       $node->{'metadata'}{'name'},
       "CPU: " . $node->{'status'}{'capacity'}{'cpu'} . "\n" .
-      "MEM: " . (map { s/Ki$//; int($_ / 1000000) . "G" } $node->{'status'}{'capacity'}{'memory'})[0] . "\n" .
+      "MEM: " . (map { s/Ki$//; nearest(0.1, $_ / 1048576) . "Gi" } $node->{'status'}{'capacity'}{'memory'})[0] . "\n" .
       "POD: " . $node->{'status'}{'capacity'}{'pods'} . "\n" .
       "GPU: " . $node->{'status'}{'capacity'}{'alpha.kubernetes.io/nvidia-gpu'},
       join("\n", map { "$_: " . $node->{'metadata'}{'labels'}{$_} } sort keys %{$node->{'metadata'}{'labels'}}),
