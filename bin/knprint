@@ -29,7 +29,9 @@ foreach my $node (@{$data->{'items'}}) {
   $gpu += $node->{'status'}{'capacity'}{'alpha.kubernetes.io/nvidia-gpu'};
 
   $tb->addRow([
-      $node->{'metadata'}{'name'},
+      $node->{'metadata'}{'name'} . "\n" .
+      join("\n", sort map { "  " . sprintf("%-15s", $_->{'type'}) . ": " . $_->{'status'} } @{$node->{'status'}{'conditions'}}) . "\n" .
+      "  Unschedulable  : " . (defined $node->{'spec'}{'unschedulable'} ? "True" : "False"),
       "CPU: " . $node->{'status'}{'capacity'}{'cpu'} . "\n" .
       "MEM: " . (map { s/Ki$//; nearest(0.1, $_ / 1048576) . "Gi" } $node->{'status'}{'capacity'}{'memory'})[0] . "\n" .
       "POD: " . $node->{'status'}{'capacity'}{'pods'} . "\n" .
