@@ -78,7 +78,7 @@ You are john.doe at https://deis.dev1.example.com
 The commands below require the `kubectl` binary and access to the Kubernetes-API.
 
 |Command|Full name|Example invocation|Description
-|---|---|---
+|---|---|---|---
 |`knsmon`|Kubernetes Namespace Monitor|`knsmon kube-system`|Prints an overview of objects inside a specific namespace
 |`knprint`|Kubernetes Node Printer|`knprint`|Prints an overview of cluster-nodes including labels and annotations
 |`ktopmem`, `ktmem`|Kubernetes top pod (memory sorted)|`ktmem`|Prints and refreshes an overview of `kubectl top pods` sorted by memory usage
