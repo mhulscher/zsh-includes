@@ -81,8 +81,8 @@ The commands below require the `kubectl` binary and access to the Kubernetes-API
 |---|---|---|---
 |`knsmon`|Kubernetes Namespace Monitor|`knsmon kube-system`|Prints an overview of objects inside a specific namespace
 |`knprint`|Kubernetes Node Printer|`knprint`|Prints an overview of cluster-nodes including labels and annotations
-|`ktopmem`, `ktmem`|Kubernetes top pod (memory sorted)|`ktmem`|Prints and refreshes an overview of `kubectl top pods` sorted by memory usage
-|`ktopcpu`, `ktcpu`|Kubernetes top pod (cpu sorted)|`ktcpu`|Prints and refreshes an overview of `kubectl top pods` sorted by cpu usage
+|`ktopmem`, `ktpmem`|Kubernetes top pod (memory sorted)|`ktpmem`|Prints and refreshes an overview of `kubectl top pods` sorted by memory usage
+|`ktopcpu`, `ktpcpu`|Kubernetes top pod (cpu sorted)|`ktpcpu`|Prints and refreshes an overview of `kubectl top pods` sorted by cpu usage
 |`ktnmem`|Kubernetes top node (memory sorted)|`ktnmem`|Prints and refreshes an overview of `kubectl top nodes` sorted by memory usage
 |`ktncpu`|Kubernetes top node (cpu sorted)|`ktncpu`|Prints and refreshes an overview of `kubectl top nodes` sorted by cpu usage
 |`kpall`|Kubernetes get Pods all|`kpall`|Prints and refreshes a list of all pods
