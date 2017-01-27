@@ -15,7 +15,7 @@ my $gpu_usage  = '-';
 my ($cpu_usage, $mem_usage, $pod_usage) = split(/\s+/, $usage);
 
 $cpu_usage = nearest(1, $cpu_usage / 1000);
-$mem_usage = nearest(1, $mem_usage / 1024) . "G";
+$mem_usage = nearest(1, $mem_usage / 1024);
 
 my $cl = Text::ASCIITable->new();
 $cl->setCols(qw(- NODES CPU MEM POD GPU));
@@ -50,7 +50,7 @@ foreach my $node (@{$data->{'items'}}) {
     ]);
 }
 
-$cl->addRow('TOTAL', scalar @{$data->{'items'}}, $cpu, $mem . "G", $pod, $gpu);
+$cl->addRow('TOTAL', scalar @{$data->{'items'}}, $cpu, $mem, $pod, $gpu);
 $cl->addRow('USAGE', $node_usage, $cpu_usage, $mem_usage, $pod_usage, $gpu_usage);
 print $cl;
 print $tb;
