@@ -7,20 +7,29 @@ use JSON;
 use Math::Round;
 use Text::ASCIITable;
 
-my $data = decode_json(`kubectl get nodes -o json | jq -Mc .`);
+my $data  = decode_json(`kubectl get nodes -o json | jq -Mc .`);
+my $usage = `kubectl top pods --all-namespaces | sed 1d | awk 'BEGIN {pods=0;cpu=0;mem=0;} { pods+=1;cpu+=\$3;mem+=\$4 } END {print cpu " " mem " " pods}'`;
+
+my $node_usage = '-';
+my $gpu_usage  = '-';
+my ($cpu_usage, $mem_usage, $pod_usage) = split(/\s+/, $usage);
+
+$cpu_usage = nearest(1, $cpu_usage / 1000);
+$mem_usage = nearest(1, $mem_usage / 1024) . "G";
 
 my $cl = Text::ASCIITable->new();
-$cl->setCols(qw(CPU MEM POD GPU));
+$cl->setCols(qw(- NODES CPU MEM POD GPU));
 $cl->setOptions(headingText => 'Cluster Resources');
 
 my $tb = Text::ASCIITable->new();
 $tb->setCols('Node','Capacity','Labels','Annotations');
 $tb->setOptions(drawRowLine => 1);
 
-my $cpu = 0;
-my $mem = 0;
-my $pod = 0;
-my $gpu = 0;
+my $nodes = 0;
+my $cpu   = 0;
+my $mem   = 0;
+my $pod   = 0;
+my $gpu   = 0;
 
 foreach my $node (@{$data->{'items'}}) {
   $cpu += $node->{'status'}{'capacity'}{'cpu'};
@@ -41,6 +50,7 @@ foreach my $node (@{$data->{'items'}}) {
     ]);
 }
 
-$cl->addRow($cpu, $mem . "G", $pod, $gpu);
+$cl->addRow('TOTAL', scalar @{$data->{'items'}}, $cpu, $mem . "G", $pod, $gpu);
+$cl->addRow('USAGE', $node_usage, $cpu_usage, $mem_usage, $pod_usage, $gpu_usage);
 print $cl;
 print $tb;

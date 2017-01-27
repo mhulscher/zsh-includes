@@ -85,7 +85,7 @@ The commands below require the `kubectl` binary and access to the Kubernetes-API
 |`ktopcpu`, `ktpcpu`|Kubernetes top pod (cpu sorted)|`ktpcpu`|Prints and refreshes an overview of `kubectl top pods` sorted by cpu usage
 |`ktnmem`|Kubernetes top node (memory sorted)|`ktnmem`|Prints and refreshes an overview of `kubectl top nodes` sorted by memory usage
 |`ktncpu`|Kubernetes top node (cpu sorted)|`ktncpu`|Prints and refreshes an overview of `kubectl top nodes` sorted by cpu usage
-|`kpall`|Kubernetes get Pods all|`kpall`|Prints and refreshes a list of all pods
+|`kpall`|Kubernetes get Pods all|`kpall`|Prints and refreshes a detailed list of all pods
 |`kpnr`|Kubernetes get Pods Not Running|`kpnr`|Prints and refreshes a detailed list of all not-running pods
 |`appmon`|Application Monitor|`appmon`|Uses the name of the current-directory as namespace-name and invokes `knsmon` on it
 |`applogs`|Application Log Streamer|`applogs .`|***Requires stern*** Uses the name of the current-directory as namespace-name and invokes `stern` using this namespace
