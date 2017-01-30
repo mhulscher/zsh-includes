@@ -10,6 +10,7 @@ alias ktncpu="watch -t 'kubectl top nodes | sort -rnk3'"
 
 alias kpall="watch -t 'kubectl get pods --all-namespaces -o wide'"
 alias kpnr="watch -t \"kubectl get pods --all-namespaces -o wide | grep -v ' Running '\""
+alias kpo="kubectl get pods --all-namespaces --show-all | sed 1d | awk '{print \$4}' | perl -ne 'chomp;\$data{\$_}++;END{printf \"%-20s \$data{\$_}\n\", \"\$_\" for sort keys %data};'"
 
 alias applogs='stern --namespace=`basename $PWD` -s 1s'
 alias appmon='watch -t knsmon `basename $PWD`'
