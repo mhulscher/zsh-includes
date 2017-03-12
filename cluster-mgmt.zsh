@@ -14,6 +14,8 @@ alias kpo="kubectl get pods --all-namespaces --show-all | sed 1d | awk '{print \
 
 alias applogs='stern --namespace=`basename $PWD` -s 1s'
 alias appmon='watch -t knsmon `basename $PWD`'
+alias apptopmem='watch -t "kubectl top pods --namespace=`basename $PWD` | sort -rnk3"'
+alias apptopcpu='watch -t "kubectl top pods --namespace=`basename $PWD` | sort -rnk2"'
 alias apps-from-deis="deis apps | grep -v '=== Apps' | xargs mkdir -v 2>/dev/null"
 
 function use-cluster {
