@@ -18,6 +18,21 @@ alias apptopmem='watch -t "kubectl top pods --namespace=`basename $PWD` | sort -
 alias apptopcpu='watch -t "kubectl top pods --namespace=`basename $PWD` | sort -rnk2"'
 alias apps-from-deis="deis apps | grep -v '=== Apps' | xargs mkdir -v 2>/dev/null"
 
+function use-context {
+  [ -z ${1+x} ] && return 1
+  local q=${1}
+  local ctxt=$(kubectl config get-contexts | sed -e 1d | sed 's,\*,,' | awk '{print $1}' | grep ${q} | head -n1)
+
+  if [ "${ctxt}x" = "x" ]; then
+    echo >&2 "context not found"
+    return 1
+  fi
+
+  # echo "Switching cluster-context to '${ctxt}'"
+  # alias kubectl="kubectl --context=${ctxt}"
+  kubectl config use-context ${ctxt}
+}
+
 function use-cluster {
   if [[ ${#@} -eq 0 ]]; then
     echo "Cluster exports cleared"
@@ -30,3 +45,5 @@ function use-cluster {
     export DEIS_PROFILE=${1}
   fi
 }
+
+function kgetc { kubectl -n ${1} get po/${2} -o json | jq -Mr ".spec.containers[].name" }

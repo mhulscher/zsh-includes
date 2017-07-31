@@ -1,0 +1,24 @@
+#!/bin/bash
+
+namespace=$1
+pod_select=$2
+container_select=$3
+
+pod=$(kubectl -n ${namespace} get pods | grep ^${pod_select} | head -n1 | awk '{print $1}')
+
+if [ -z $"{pod}" ]; then
+  echo "No pod matched '^${pod_select}'"
+  exit 1
+fi
+
+if [ -n "${container_select}" ]; then
+  container=$(kubectl -n ${namespace} get po/${pod} -o json | jq -Mr '.spec.containers[].name' | grep ^${container_select} | head -n1)
+  if [ -n "${container}" ]; then
+    kubectl -n ${namespace} exec -ti ${pod}  -c ${container} -- sh
+  else
+    echo "No container matched '^${container_select}'"
+    exit 1
+  fi
+else
+  kubectl -n ${namespace} exec -ti ${pod} -- sh
+fi
