@@ -17,6 +17,7 @@ alias appmon='watch -t knsmon `basename $PWD`'
 alias apptopmem='watch -t "kubectl top pods --namespace=`basename $PWD` | sort -rnk3"'
 alias apptopcpu='watch -t "kubectl top pods --namespace=`basename $PWD` | sort -rnk2"'
 alias apps-from-deis="deis apps | grep -v '=== Apps' | xargs mkdir -v 2>/dev/null"
+alias apps-from-namespaces="kubectl get namespaces -ojsonpath='{.items[*].metadata.name}' | xargs -n1 mkdir -pv"
 
 function use-context {
   [ -z ${1+x} ] && return 1
@@ -31,6 +32,10 @@ function use-context {
   # echo "Switching cluster-context to '${ctxt}'"
   # alias kubectl="kubectl --context=${ctxt}"
   kubectl config use-context ${ctxt}
+  export DEIS_PROFILE=${ctxt}
+
+  mkdir -pv ~/clusters/${ctxt}
+  cd ~/clusters/${ctxt}
 }
 
 function use-cluster {
