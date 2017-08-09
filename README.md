@@ -46,7 +46,12 @@ $ mkdir -pv ~/clusters/dev1 ~/clusters/ext1 ~/clusters/int1
 
 ### Usage
 
-#### Cluster-context switching
+#### Cluster-context switching (kubeconfig context)
+
+Issue `use-context some-cluster` to switch to the first context that matches the first  arrgument.
+Same as `use-cluster` except it doesn't set `KUBECONFIG`.
+
+#### Cluster-context switching (seperate KUBECONIG)
 
 Using the `use-cluster` function you can switch between credentials of multiple clusters. This function will set the appropriate `KUBECONFIG` and `DEIS_PROFILE` environment variables. Assuming we want to switch context to a cluster called `usvc-dev1`, we make sure that the files below exist.
 
@@ -79,6 +84,7 @@ The commands below require the `kubectl` binary and access to the Kubernetes-API
 
 |Command|Full name|Example invocation|Description
 |---|---|---|---
+|`kubesh`|Kubernetes Shell`|`kubesh default mypod`|Specify the namespace and pod to start a shell in
 |`knsmon`|Kubernetes Namespace Monitor|`knsmon kube-system`|Prints an overview of objects inside a specific namespace
 |`knprint`|Kubernetes Node Printer|`knprint`|Prints an overview of cluster-nodes including labels and annotations
 |`ktopmem`, `ktpmem`|Kubernetes top pod (memory sorted)|`ktpmem`|Prints and refreshes an overview of `kubectl top pods` sorted by memory usage
@@ -89,6 +95,7 @@ The commands below require the `kubectl` binary and access to the Kubernetes-API
 |`kpnr`|Kubernetes get Pods Not Running|`kpnr`|Prints and refreshes a detailed list of all not-running pods
 |`appmon`|Application Monitor|`appmon`|Uses the name of the current-directory as namespace-name and invokes `knsmon` on it
 |`applogs`|Application Log Streamer|`applogs .`|***Requires stern*** Uses the name of the current-directory as namespace-name and invokes `stern` using this namespace
+|`apps-from-namespaces`|`-`|`apps-from-namespaces`|Creates a directory inside the current directory for every namespace found using `kubectl get namespaces`
 
 ##### Deis Workflow
 
