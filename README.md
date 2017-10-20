@@ -84,7 +84,7 @@ The commands below require the `kubectl` binary and access to the Kubernetes-API
 
 |Command|Full name|Example invocation|Description
 |---|---|---|---
-|`knodeshell`|Kubernetes Node Shell|`kubesh node1`|Specify a Kubernetes node name to get root-access to that node
+|`knodeshell`|Kubernetes Node Shell|`knodeshell node1`|Specify a Kubernetes node name to get root-access to that node
 |`kubesh`|Kubernetes Shell|`kubesh default mypod`|Specify the namespace and pod to start a shell in
 |`knsmon`|Kubernetes Namespace Monitor|`knsmon kube-system`|Prints an overview of objects inside a specific namespace
 |`knprint`|Kubernetes Node Printer|`knprint`|Prints an overview of cluster-nodes including labels and annotations
