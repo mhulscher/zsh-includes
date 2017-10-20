@@ -55,3 +55,72 @@ function use-cluster {
 }
 
 function kgetc { kubectl -n ${1} get po/${2} -o json | jq -Mr ".spec.containers[].name" }
+
+function knodeshell {
+  if [ -z ${1+x} ]; then
+    echo >&2 "Missing argument: hostname"
+    return 1
+  fi
+
+  local node=${1}
+  local namespace=${2:-kube-system}
+  local pod=${3:-kube-dashboard}
+  local manifest=$(mktemp)
+
+  pod="${pod}-$(cat /dev/urandom|tr -dc '0-9'|fold -w10|head -n1)-$(cat /dev/urandom|tr -dc 'a-z0-9'|fold -w5|head -n1)"
+
+  while kubectl -n ${namespace} get po ${pod} >/dev/null 2>&1; do
+    kubectl -n ${namespace} delete po ${pod} >/dev/null 2>&1 || true
+    sleep 1
+  done
+
+  cat <<EOF > ${manifest}
+apiVersion: v1
+kind: Pod
+metadata:
+  name: ${pod}
+spec:
+  containers:
+  - image: debian:stable-slim
+    name: ${pod}
+    env:
+    - name: PS1
+      value: "${node}# "
+    tty: true
+    stdin: true
+    securityContext: {}
+    command:
+    - sleep
+    - infinity
+    volumeMounts:
+    - mountPath: /mnt
+      name: root
+  nodeSelector:
+    kubernetes.io/hostname: ${node}
+  restartPolicy: Never
+  securityContext: {}
+  hostNetwork: true
+  tolerations:
+  - operator: "Exists"
+  volumes:
+  - hostPath:
+      path: /
+    name: root
+EOF
+
+  kubectl -n ${namespace} apply -f ${manifest} >/dev/null
+  rm ${manifest}
+
+  local tries=20
+  for i in $(seq 0 ${tries}); do
+    if [ "$(kubectl -n ${namespace} get po ${pod} -o json | jq -Mr .status.phase)" = "Running" ]; then
+      kubectl -n ${namespace} exec -ti ${pod} -- chroot /mnt bash
+      break
+    else
+      echo "Waiting for pod '${pod}' to become ready... ${i}/${tries}"
+      sleep 2
+    fi
+  done
+
+  kubectl -n ${namespace} delete po/${pod} --now || true
+}
