@@ -84,11 +84,16 @@ spec:
   - image: debian:stable-slim
     name: ${pod}
     env:
+    - name: LANG
+      value: en_US.UTF-8
+    - name: TERM
+      value: "xterm-256color"
     - name: PS1
       value: "${node}# "
     tty: true
     stdin: true
-    securityContext: {}
+    securityContext:
+      privileged: true
     command:
     - sleep
     - infinity
@@ -99,6 +104,8 @@ spec:
     kubernetes.io/hostname: ${node}
   restartPolicy: Never
   securityContext: {}
+  hostIPC: true
+  hostPID: true
   hostNetwork: true
   tolerations:
   - operator: "Exists"
@@ -108,7 +115,7 @@ spec:
     name: root
 EOF
 
-  kubectl -n ${namespace} apply -f ${manifest} >/dev/null
+  kubectl -n ${namespace} apply -f ${manifest} >/dev/null || return 1
   rm ${manifest}
 
   local tries=20
