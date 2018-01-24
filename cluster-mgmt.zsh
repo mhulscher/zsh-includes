@@ -1,7 +1,5 @@
 # cluster mgmt functions
 
-source ${PWD://$(basename $0)}/kubernetes-functions.sh
-
 alias cssh-k8s-nodes='cssh $(kubectl get nodes -o jsonpath="{.items[*].metadata.name}")'
 
 alias ktopmem="watch -t 'kubectl top pods --all-namespaces | sort -rnk4'"
