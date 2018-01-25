@@ -119,3 +119,23 @@ function k.delr() {
     done
   fi
 }
+
+function k.delstatus() {
+  [ -z ${1+x} ] && return 1
+
+  local state=${1}
+  local pods=$(k.la | awk '$3 == "'${state}'" { print $0 }')
+
+  if [ "${pods}" = "" ]; then
+    echo >&2 "No pods have state '${state}'"
+    return 1
+  fi
+
+  echo -e "\n${pods}\n"
+  echo -n "I am about delete these pods, are you sure? [yn] "
+  read reply
+
+  [ "${reply}" != "y" ] && return 0
+
+  echo ${pods} | awk '{ print $1 }' | xargs -L1 -I%% kubectl delete po %% --now --force
+}
