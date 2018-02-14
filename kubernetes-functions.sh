@@ -1,11 +1,4 @@
-function k() {
-  if ! command -v kubectl 2>&1 >/dev/null; then
-    echo >&2 "kubectl is not installed"
-    exit 1
-  fi
-
-  kubectl "$@" 
-}
+alias k=kubectl
 
 function k.lc() {
   k config get-contexts
@@ -138,4 +131,12 @@ function k.delstatus() {
   [ "${reply}" != "y" ] && return 0
 
   echo ${pods} | awk '{ print $1 }' | xargs -L1 -I%% kubectl delete po %% --now --force
+}
+
+function k.nh() {
+  k get nodes -o json \
+    | jq -r '.items[] | .metadata.name,(.status.conditions[] | .type,.status)' \
+    | awk '$1 ~ /^[a-z]/ { printf "\n%-20s", $1 } $1 ~ /^[A-Z]/ { printf "%-15s", $1 }' \
+    | sed 1d
+  echo
 }
