@@ -53,7 +53,7 @@ function k.ls () {
 }
 
 function k.la() {
-  k.ls "$@" --show-all=true --include-uninitialized=true
+  k.ls "$@" --include-uninitialized=true
 }
 
 function k.ll() {
@@ -61,7 +61,15 @@ function k.ll() {
 }
 
 function k.lla() {
-  k.ls "$@" --show-all=true --include-uninitialized=true --show-labels=true --output=wide
+  k.ls "$@" --include-uninitialized=true --show-labels=true --output=wide
+}
+
+function k.nr() {
+  kubectl get pods --all-namespaces --output=wide | grep -vP "\b(\d+)/\1\b" | grep -ve Error -e Completed
+}
+
+function k.wnr() {
+  watch -t 'kubectl get pods --all-namespaces --output=wide | grep -vP "\b(\d+)/\1\b" | grep -ve Error -e Completed'
 }
 
 function k.del() {
@@ -77,6 +85,7 @@ function k.delr() {
   [ -z ${1+x} ] && return 1
 
   local search=${1}
+  local force=${2:-"n"}
   local pods=$(k.ls -o wide | grep "^${search}")
   if [ -z ${pods+x} ]; then
     echo "Found no pods"
@@ -93,10 +102,13 @@ function k.delr() {
   local count=$(echo ${pods} | wc -l)
 
   echo -e "\n${pods}\n"
-  echo -n "I am about to delete these ${count} pods, one-by-one. Are you sure? [yn] "
-  read reply
 
-  if [ ${reply} = "y" ]; then
+  if [ ${force} != "y" ]; then
+    echo -n "I am about to delete these ${count} pods, one-by-one. Are you sure? [yn] "
+    read reply
+  fi
+
+  if [ ${force} = "y" ] || [ ${reply} = "y" ]; then
     local index=1
     for pod in $(echo ${pods} | awk '{print $1}'); do
       echo -e "\nDeleting pod (${index}/${count}): ${pod}"
