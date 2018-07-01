@@ -146,7 +146,7 @@ function k.delstatus() {
 
   [ "${reply}" != "y" ] && return 0
 
-  echo ${pods} | awk '{ print $1 }' | xargs -L1 -I%% kubectl delete po %% --now --force
+  echo ${pods} | awk '{ print $1 }' | xargs -I%% kubectl delete po %% --grace-period=0
 }
 
 function k.nh() {
