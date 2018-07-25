@@ -73,7 +73,7 @@ function k.wnr() {
 }
 
 function k.wmaintenance() {
-  watch -t 'kubectl version --short; echo; kubectl get nodes -o wide; echo; kubectl get pvc,pv,po --include-uninitialized=true -o wide --all-namespaces | grep -vP "(\d+)/\1" | grep -v -e Error -e Completed'
+  watch -t 'kubectl version --short; echo; kubectl get nodes -o wide; echo; kubectl get po --include-uninitialized=true -o wide --all-namespaces | grep -vP "(\d+)/\1" | grep -v -e Error -e Completed'
 }
 
 function k.del() {
