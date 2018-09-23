@@ -7,7 +7,13 @@ function k.lc() {
 function k.uc() {
   [ -z ${1+x} ] && return 1
   local q=${1}
-  local ctxt=$(k config get-contexts | sed -e 1d | sed 's,\*,,' | awk '{print $1}' | grep ${q} | head -n1)
+  local ctxt_all=$(k config get-contexts | sed -e 1d | sed 's,\*,,' | awk '{print $1}')
+
+  # Specific search first (starts with)
+  local ctxt=$(echo ${ctxt_all}| grep ^${q} | head -n1)
+
+  # Generic search (contains)
+  [ "${ctxt}x" = "x" ] && ctxt=$(echo ${ctxt_all} | grep ${q} | head -n1)
 
   if [ "${ctxt}x" = "x" ]; then
     echo >&2 "context not found"
@@ -18,7 +24,20 @@ function k.uc() {
 }
 
 function k.ns() {
-  k config set-context $(k config current-context) --namespace ${1}
+  [ -z ${1+x} ] && return 1
+  local q=${1}
+  
+  local ns_all=$(k get ns -ocustom-columns=NAME:.metadata.name --no-headers)
+
+  local ns=$(echo ${ns_all} | grep ^${q} | head -n1)
+  [ "${ns}x" = "x" ] && ns=$(echo ${ns_all} | grep ${q} | head -n1)
+
+  if [ "${ns}x" = "x" ]; then
+    echo >&2 "namespace not found"
+    return 1
+  fi
+
+  k config set-context $(k config current-context) --namespace ${ns}
 }
 
 k.is_valid_object() {
