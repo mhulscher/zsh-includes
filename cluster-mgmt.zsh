@@ -1,6 +1,6 @@
 # cluster mgmt functions
 
-alias cssh-k8s-nodes='cssh $(kubectl get nodes -o jsonpath="{.items[*].metadata.name}")'
+alias cssh-k8s-nodes='cssh -ns $(kubectl get nodes -o jsonpath="{.items[*].metadata.name}")'
 
 alias ktopmem="watch -t 'kubectl top pods --all-namespaces | sort -rnk4'"
 alias ktopcpu="watch -t 'kubectl top pods --all-namespaces | sort -rnk3'"
@@ -21,6 +21,8 @@ alias apptopmem='watch -t "kubectl top pods --namespace=`basename $PWD` | sort -
 alias apptopcpu='watch -t "kubectl top pods --namespace=`basename $PWD` | sort -rnk2"'
 alias apps-from-deis="deis apps | grep -v '=== Apps' | xargs mkdir -v 2>/dev/null"
 alias apps-from-namespaces="kubectl get namespaces -ojsonpath='{.items[*].metadata.name}' | xargs -n1 mkdir -pv"
+
+alias pxctl='kubectl -n kube-system exec -c portworx -ti $(kubectl -n kube-system get pods -l name=portworx -ocustom-columns=NAME:.metadata.name --no-headers | head -n1) -- /opt/pwx/bin/pxctl'
 
 #function use-context {
 #  [ -z ${1+x} ] && return 1
