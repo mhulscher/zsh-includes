@@ -19,13 +19,6 @@ alias kpall="watch -t 'kubectl get pods --all-namespaces -o wide'"
 alias kpnr="watch -t \"kubectl get pods --all-namespaces -o wide | grep -v ' Running '\""
 alias kpo="kubectl get pods --all-namespaces | sed 1d | awk '{print \$4}' | perl -ne 'chomp;\$data{\$_}++;END{printf \"%-20s \$data{\$_}\n\", \"\$_\" for sort keys %data};'"
 
-alias applogs='stern --namespace=`basename $PWD` -s 1s'
-alias appmon='watch -t knsmon `basename $PWD`'
-alias apptopmem='watch -t "kubectl top pods --namespace=`basename $PWD` | sort -rnk3"'
-alias apptopcpu='watch -t "kubectl top pods --namespace=`basename $PWD` | sort -rnk2"'
-alias apps-from-deis="deis apps | grep -v '=== Apps' | xargs mkdir -v 2>/dev/null"
-alias apps-from-namespaces="kubectl get namespaces -ojsonpath='{.items[*].metadata.name}' | xargs -n1 mkdir -pv"
-
 alias pxctl='kubectl -n kube-system exec -c portworx -ti $(kubectl -n kube-system get pods -l name=portworx -ocustom-columns=NAME:.metadata.name --no-headers | head -n1) -- /opt/pwx/bin/pxctl'
 
 function kgetc { kubectl -n ${1} get po/${2} -o json | jq -Mr ".spec.containers[].name" }
