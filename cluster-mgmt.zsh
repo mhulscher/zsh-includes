@@ -1,5 +1,9 @@
 # cluster mgmt functions
 
+function p_info {
+  echo "\n\e[42m[+]\e[0m $*\n"
+}
+
 alias cssh-k8s-nodes='cssh -ns $(kubectl get nodes -o jsonpath="{.items[*].metadata.name}")'
 
 alias ktopmem="watch -t 'kubectl top pods --all-namespaces | sort -rnk4'"
@@ -10,9 +14,9 @@ alias ktpcpu="watch -t 'kubectl top pods --all-namespaces | sort -rnk3'"
 alias ktnmem="watch -t 'kubectl top nodes | sort -rnk4'"
 alias ktncpu="watch -t 'kubectl top nodes | sort -rnk3'"
 
-alias kpls="kubectl get pods --all-namespaces --include-uninitialized=true -o wide"
-alias kpall="watch -t 'kubectl get pods --all-namespaces --include-uninitialized=true -o wide'"
-alias kpnr="watch -t \"kubectl get pods --all-namespaces --include-uninitialized=true -o wide | grep -v ' Running '\""
+alias kpls="kubectl get pods --all-namespaces -o wide"
+alias kpall="watch -t 'kubectl get pods --all-namespaces -o wide'"
+alias kpnr="watch -t \"kubectl get pods --all-namespaces -o wide | grep -v ' Running '\""
 alias kpo="kubectl get pods --all-namespaces | sed 1d | awk '{print \$4}' | perl -ne 'chomp;\$data{\$_}++;END{printf \"%-20s \$data{\$_}\n\", \"\$_\" for sort keys %data};'"
 
 alias applogs='stern --namespace=`basename $PWD` -s 1s'
@@ -24,39 +28,62 @@ alias apps-from-namespaces="kubectl get namespaces -ojsonpath='{.items[*].metada
 
 alias pxctl='kubectl -n kube-system exec -c portworx -ti $(kubectl -n kube-system get pods -l name=portworx -ocustom-columns=NAME:.metadata.name --no-headers | head -n1) -- /opt/pwx/bin/pxctl'
 
-#function use-context {
-#  [ -z ${1+x} ] && return 1
-#  local q=${1}
-#  local ctxt=$(kubectl config get-contexts | sed -e 1d | sed 's,\*,,' | awk '{print $1}' | grep ${q} | head -n1)
-#
-#  if [ "${ctxt}x" = "x" ]; then
-#    echo >&2 "context not found"
-#    return 1
-#  fi
-#
-#  # echo "Switching cluster-context to '${ctxt}'"
-#  # alias kubectl="kubectl --context=${ctxt}"
-#  kubectl config use-context ${ctxt}
-#  export DEIS_PROFILE=${ctxt}
-#
-#  mkdir -pv ~/clusters/${ctxt}
-#  cd ~/clusters/${ctxt}
-#}
-#
-#function use-cluster {
-#  if [[ ${#@} -eq 0 ]]; then
-#    echo "Cluster exports cleared"
-#    unset KUBECONFIG
-#    unset DEIS_PROFILE
-#  else
-#    echo "Using cluster '${1}'"
-#    cd ~/clusters/${1}
-#    export KUBECONFIG="${HOME}/.kube/${1}"
-#    export DEIS_PROFILE=${1}
-#  fi
-#}
-
 function kgetc { kubectl -n ${1} get po/${2} -o json | jq -Mr ".spec.containers[].name" }
+
+function kinjectkey {
+  local pod="libio-key-installer"
+
+  local reply=""
+  echo -n "Inject SSH-key on all nodes? [yn] " 
+  read reply
+  [ "${reply}" != "y" ] && return 1
+
+  # Cleanup remaining pods
+  kubectl delete po -l app=${pod} >/dev/null 2>&1
+
+  for node in $(kubectl get nodes -o jsonpath="{.items[*].metadata.name}"); do
+    p_info "${node}: running ${pod}"
+
+    cat <<EOF | kubectl apply -f-
+apiVersion: v1
+kind: Pod
+metadata:
+  name: ${pod}
+  labels:
+    app: ${pod}
+spec:
+  containers:
+  - image: alpine
+    name: ${pod}
+    command:
+    - /bin/sh
+    - -xc
+    - grep -q 'mitch.hulscher@lib.io' /root/.ssh/authorized_keys || echo "ssh-rsa AAAAB3NzaC1yc2EAAAABJQAAAQEAucUjmnEszJrcFAfikVZOEY0vEBZk0IEu9uuvGHG1URkn9D03QSoZ/0JyvifRR+r3YbxZgstPtHrvf9yWVmuuvP6B/aaoP4LIflfFPyfJPLgO4OHNjN/DBcpNkXPKNv/E3hV9cEH62k8y5RDi0qRE1slXRlOjn1uZYGLfcv1l8J+04pGWWhQJj6VTk8XDQUzuHsA4ftgOVgrNWx1sH0pi1hS+4Agx13gqe8oMarS+vrvbAlB8AtqM4SHIoXb0vQGibIuSxYZF7ISp1NcWBddtnWNT2K2rdmd/7rZBYtGGF+29p3io1VLxj2V98EJNo4qxXEP/Ovi4ZnK5Asu5qjynkw== mitch.hulscher@lib.io" >> /root/.ssh/authorized_keys
+    volumeMounts:
+    - mountPath: /root/.ssh
+      name: ssh
+  nodeSelector:
+    kubernetes.io/hostname: ${node}
+  restartPolicy: Never
+  tolerations:
+  - operator: "Exists"
+  volumes:
+  - hostPath:
+      path: /root/.ssh
+    name: ssh
+EOF
+
+    sleep 5
+
+    while kubectl get po -l app=${pod} --no-headers | awk '{print $3}' | tail -n1 | grep -qv Completed ; do
+      p_info "${node}: waiting on pod to complete"
+      sleep 5
+    done
+
+    p_info "${node}: done"
+    kubectl delete po -l app=${pod}
+  done
+}
 
 function knodeshell {
   if [ -z ${1+x} ]; then

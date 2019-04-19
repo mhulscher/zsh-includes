@@ -72,7 +72,7 @@ function k.ls () {
 }
 
 function k.la() {
-  k.ls "$@" --include-uninitialized=true
+  k.ls "$@"
 }
 
 function k.ll() {
@@ -80,19 +80,19 @@ function k.ll() {
 }
 
 function k.lla() {
-  k.ls "$@" --include-uninitialized=true --show-labels=true --output=wide
+  k.ls "$@" --show-labels=true --output=wide
 }
 
 function k.nr() {
-  kubectl get pods --all-namespaces --include-uninitialized=true --output=wide | grep -vP "\b(\d+)/\1\b" | grep -ve Error -e Completed
+  kubectl get pods --all-namespaces --output=wide | grep -vP "\b(\d+)/\1\b" | grep -ve Error -e Completed
 }
 
 function k.wnr() {
-  watch -t 'kubectl get pods --all-namespaces --include-uninitialized=true --output=wide | grep -vP "\b(\d+)/\1\b" | grep -ve Error -e Completed'
+  watch -t 'kubectl get pods --all-namespaces --output=wide | grep -vP "\b(\d+)/\1\b" | grep -ve Error -e Completed'
 }
 
 function k.wmaintenance() {
-  watch -t 'kubectl version --short; echo; kubectl get nodes -o wide; echo; kubectl get po --include-uninitialized=true -o wide --all-namespaces | grep -vP "(\d+)/\1" | grep -v -e Error -e Completed'
+  watch -t 'kubectl version --short; echo; kubectl get nodes -o wide; echo; kubectl get po -o wide --all-namespaces | grep -vP "(\d+)/\1" | grep -v -e Error -e Completed'
 }
 
 function k.del() {
