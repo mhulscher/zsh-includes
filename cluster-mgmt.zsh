@@ -4,7 +4,8 @@ function p_info {
   echo "\n\e[42m[+]\e[0m $*\n"
 }
 
-alias cssh-k8s-nodes='cssh -ns $(kubectl get nodes -o jsonpath="{.items[*].metadata.name}")'
+# alias cssh-k8s-nodes='cssh -ns $(kubectl get nodes -o jsonpath="{.items[*].metadata.name}")'
+alias cssh-k8s-nodes='cssh -u root -sa "-o StrictHostKeyChecking=no" -ns $(kubectl get nodes -o jsonpath="{.items[*].status.addresses[0].address}")'
 
 alias ktopmem="watch -t 'kubectl top pods --all-namespaces | sort -rnk4'"
 alias ktopcpu="watch -t 'kubectl top pods --all-namespaces | sort -rnk3'"
