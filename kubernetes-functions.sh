@@ -92,7 +92,9 @@ function k.wnr() {
 }
 
 function k.wmaintenance() {
-  watch -t 'kubectl version --short; echo; kubectl get nodes -o wide; echo; kubectl get po -o wide --all-namespaces | grep -vP "(\d+)/\1" | grep -v -e Error -e Completed'
+  context=""
+  test ${1+x} && context="--context=${1}"
+  watch -t "kubectl ${context} version --short; echo; kubectl ${context} get nodes -o wide; echo; kubectl ${context} get po -o wide --all-namespaces | grep -vP '(\d+)/\1' | grep -v -e Error -e Completed"
 }
 
 function k.del() {
