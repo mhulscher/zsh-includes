@@ -84,17 +84,17 @@ function k.lla() {
 }
 
 function k.nr() {
-  kubectl get pods --all-namespaces --output=wide | grep -vP "\b(\d+)/\1\b" | grep -ve Error -e Completed
+  kubectl get pods --all-namespaces --output=wide | grep -vP "\b(\d+)/\1\b" | grep -ve '\bError\b' -e '\bCompleted\b'
 }
 
 function k.wnr() {
-  watch -t 'kubectl get pods --all-namespaces --output=wide | grep -vP "\b(\d+)/\1\b" | grep -ve Error -e Completed'
+  watch -t 'kubectl get pods --all-namespaces --output=wide | grep -vP "\b(\d+)/\1\b" | grep -ve "\bError\b" -e Completed'
 }
 
 function k.wmaintenance() {
   context=""
   test ${1+x} && context="--context=${1}"
-  watch -t "kubectl ${context} version --short; echo; kubectl ${context} get nodes -o wide; echo; kubectl ${context} get po -o wide --all-namespaces | grep -vP '(\d+)/\1' | grep -v -e Error -e Completed"
+  watch -t "kubectl ${context} version --short; echo; kubectl ${context} get nodes -o wide; echo; kubectl ${context} get po -o wide --all-namespaces | grep -vP '(\d+)/\1' | grep -v -e '\bError\b' -e Completed"
 }
 
 function k.del() {
