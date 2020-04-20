@@ -4,8 +4,8 @@ function p_info {
   echo "\n\e[42m[+]\e[0m $*\n"
 }
 
-# alias cssh-k8s-nodes='cssh -ns $(kubectl get nodes -o jsonpath="{.items[*].metadata.name}")'
-alias cssh-k8s-nodes='cssh -u root -sa "-o StrictHostKeyChecking=no" -ns $(kubectl get nodes -o jsonpath="{.items[*].status.addresses[0].address}")'
+alias cssh-k8s-nodes='cssh -ns $(kubectl get nodes -o jsonpath="{.items[*].metadata.name}")'
+#alias cssh-k8s-nodes='cssh -u root -sa "-o StrictHostKeyChecking=no" -ns $(kubectl get nodes -o jsonpath="{.items[*].status.addresses[0].address}")'
 
 alias ktopmem="watch -t 'kubectl top pods --all-namespaces | sort -rnk4'"
 alias ktopcpu="watch -t 'kubectl top pods --all-namespaces | sort -rnk3'"
@@ -25,10 +25,14 @@ alias pxctl='kubectl -n kube-system exec -c portworx -ti $(kubectl -n kube-syste
 function kgetc { kubectl -n ${1} get po/${2} -o json | jq -Mr ".spec.containers[].name" }
 
 function kinjectkey {
+  local user=${1:-root}
+  local home="/home/${user}"
   local pod="libio-key-installer"
 
+  [ "${user}" = "root" ] && home="/root"
+
   local reply=""
-  echo -n "Inject SSH-key on all nodes? [yn] " 
+  echo -n "Inject SSH-key on all nodes for user '${user}'? [yn] "
   read reply
   [ "${reply}" != "y" ] && return 1
 
@@ -52,9 +56,9 @@ spec:
     command:
     - /bin/sh
     - -xc
-    - grep -q 'mitch.hulscher@lib.io' /root/.ssh/authorized_keys || echo "ssh-rsa AAAAB3NzaC1yc2EAAAABJQAAAQEAucUjmnEszJrcFAfikVZOEY0vEBZk0IEu9uuvGHG1URkn9D03QSoZ/0JyvifRR+r3YbxZgstPtHrvf9yWVmuuvP6B/aaoP4LIflfFPyfJPLgO4OHNjN/DBcpNkXPKNv/E3hV9cEH62k8y5RDi0qRE1slXRlOjn1uZYGLfcv1l8J+04pGWWhQJj6VTk8XDQUzuHsA4ftgOVgrNWx1sH0pi1hS+4Agx13gqe8oMarS+vrvbAlB8AtqM4SHIoXb0vQGibIuSxYZF7ISp1NcWBddtnWNT2K2rdmd/7rZBYtGGF+29p3io1VLxj2V98EJNo4qxXEP/Ovi4ZnK5Asu5qjynkw== mitch.hulscher@lib.io" >> /root/.ssh/authorized_keys
+    - grep -q 'mitch.hulscher@lib.io' ${home}/.ssh/authorized_keys || echo "ssh-rsa AAAAB3NzaC1yc2EAAAABJQAAAQEAucUjmnEszJrcFAfikVZOEY0vEBZk0IEu9uuvGHG1URkn9D03QSoZ/0JyvifRR+r3YbxZgstPtHrvf9yWVmuuvP6B/aaoP4LIflfFPyfJPLgO4OHNjN/DBcpNkXPKNv/E3hV9cEH62k8y5RDi0qRE1slXRlOjn1uZYGLfcv1l8J+04pGWWhQJj6VTk8XDQUzuHsA4ftgOVgrNWx1sH0pi1hS+4Agx13gqe8oMarS+vrvbAlB8AtqM4SHIoXb0vQGibIuSxYZF7ISp1NcWBddtnWNT2K2rdmd/7rZBYtGGF+29p3io1VLxj2V98EJNo4qxXEP/Ovi4ZnK5Asu5qjynkw== mitch.hulscher@lib.io" >> ${home}/.ssh/authorized_keys
     volumeMounts:
-    - mountPath: /root/.ssh
+    - mountPath: ${home}/.ssh
       name: ssh
   nodeSelector:
     kubernetes.io/hostname: ${node}
@@ -63,7 +67,7 @@ spec:
   - operator: "Exists"
   volumes:
   - hostPath:
-      path: /root/.ssh
+      path: ${home}/.ssh
     name: ssh
 EOF
 
