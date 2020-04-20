@@ -1,4 +1,5 @@
 alias k=kubectl
+alias m=minikube
 
 function k.lc() {
   k config get-contexts
@@ -10,10 +11,10 @@ function k.uc() {
   local ctxt_all=$(k config get-contexts | sed -e 1d | sed 's,\*,,' | awk '{print $1}')
 
   # Specific search first (starts with)
-  local ctxt=$(echo ${ctxt_all}| grep ^${q} | head -n1)
+  local ctxt=$(echo ${ctxt_all}| grep "^${q}" | head -n1)
 
   # Generic search (contains)
-  [ "${ctxt}x" = "x" ] && ctxt=$(echo ${ctxt_all} | grep ${q} | head -n1)
+  [ "${ctxt}x" = "x" ] && ctxt=$(echo ${ctxt_all} | grep "${q}" | head -n1)
 
   if [ "${ctxt}x" = "x" ]; then
     echo >&2 "context not found"
@@ -29,8 +30,8 @@ function k.ns() {
   
   local ns_all=$(k get ns -ocustom-columns=NAME:.metadata.name --no-headers)
 
-  local ns=$(echo ${ns_all} | grep ^${q} | head -n1)
-  [ "${ns}x" = "x" ] && ns=$(echo ${ns_all} | grep ${q} | head -n1)
+  local ns=$(echo ${ns_all} | grep "^${q}" | head -n1)
+  [ "${ns}x" = "x" ] && ns=$(echo ${ns_all} | grep "${q}" | head -n1)
 
   if [ "${ns}x" = "x" ]; then
     echo >&2 "namespace not found"
@@ -92,7 +93,7 @@ function k.wnr() {
 }
 
 function k.wmaintenance() {
-  watch -t 'kubectl version --short; echo; kubectl get nodes -o wide; echo; kubectl get po -o wide --all-namespaces | grep -vP "(\d+)/\1" | grep -v -e Error -e Completed'
+  watch -t 'kubectl version --short; echo; kubectl get nodes -o wide -L beta.kubernetes.io/instance-type,failure-domain.beta.kubernetes.io/zone; echo; kubectl get po -o wide --all-namespaces | grep -vP "(\d+)/\1" | grep -v -e Error -e Completed'
 }
 
 function k.del() {
@@ -171,7 +172,7 @@ function k.delstatus() {
 function k.nh() {
   k get nodes -o json \
     | jq -r '.items[] | .metadata.name,(.status.conditions[] | .type,.status)' \
-    | awk '$1 ~ /^[a-z]/ { printf "\n%-20s", $1 } $1 ~ /^[A-Z]/ { printf "%-15s", $1 }' \
+    | awk '$1 ~ /^[a-z]/ { printf "\n%-50s", $1 } $1 ~ /^[A-Z]/ { printf "%-15s", $1 }' \
     | sed 1d
   echo
 }
