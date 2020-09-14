@@ -11,14 +11,14 @@ my $data  = decode_json(`kubectl get nodes -o json | jq -Mc .`);
 my $usage = `kubectl top pods --all-namespaces | sed 1d | awk 'BEGIN {pods=0;cpu=0;mem=0;} { pods+=1;cpu+=\$3;mem+=\$4 } END {print cpu " " mem " " pods}'`;
 
 my $node_usage = '-';
-my $gpu_usage  = '-';
+my $storage_usage = '-';
 my ($cpu_usage, $mem_usage, $pod_usage) = split(/\s+/, $usage);
 
 $cpu_usage = nearest(1, $cpu_usage / 1000);
 $mem_usage = nearest(1, $mem_usage / 1024);
 
 my $cl = Text::ASCIITable->new();
-$cl->setCols(qw(- NODES CPU MEM POD GPU));
+$cl->setCols(qw(- NODES CPU MEM POD STORAGE));
 $cl->setOptions(headingText => 'Cluster Resources');
 
 my $tb = Text::ASCIITable->new();
@@ -26,16 +26,16 @@ $tb->setCols('Node','Capacity','Labels','Annotations');
 $tb->setOptions(drawRowLine => 1);
 
 my $nodes = 0;
-my $cpu   = 0;
-my $mem   = 0;
-my $pod   = 0;
-my $gpu   = 0;
+my $cpu = 0;
+my $mem = 0;
+my $pod = 0;
+my $storage = 0; # ephemeral-storage
 
 foreach my $node (@{$data->{'items'}}) {
   $cpu += $node->{'status'}{'capacity'}{'cpu'};
-  $mem += (map { s/Ki$//; int($_ / 1000000) } $node->{'status'}{'capacity'}{'memory'})[0];
+  $mem += (map { s/Ki$//; nearest(0.1, $_ / 1048576) } $node->{'status'}{'capacity'}{'memory'})[0];
   $pod += $node->{'status'}{'capacity'}{'pods'};
-  $gpu += $node->{'status'}{'capacity'}{'alpha.kubernetes.io/nvidia-gpu'};
+  $storage += (map { s/Ki$//; nearest(0.1, $_ / 1048576) } $node->{'status'}{'capacity'}{'ephemeral-storage'})[0];
 
   $tb->addRow([
       $node->{'metadata'}{'name'} . "\n" .
@@ -44,13 +44,13 @@ foreach my $node (@{$data->{'items'}}) {
       "CPU: " . $node->{'status'}{'capacity'}{'cpu'} . "\n" .
       "MEM: " . (map { s/Ki$//; nearest(0.1, $_ / 1048576) . "Gi" } $node->{'status'}{'capacity'}{'memory'})[0] . "\n" .
       "POD: " . $node->{'status'}{'capacity'}{'pods'} . "\n" .
-      "GPU: " . $node->{'status'}{'capacity'}{'alpha.kubernetes.io/nvidia-gpu'},
+      "STO: " . (map { s/Ki$//; nearest(0.1, $_ / 1048576) . "Gi" } $node->{'status'}{'capacity'}{'ephemeral-storage'})[0] . "\n" ,
       join("\n", map { "$_: " . $node->{'metadata'}{'labels'}{$_} } sort keys %{$node->{'metadata'}{'labels'}}),
       join("\n", map { "$_: " . $node->{'metadata'}{'annotations'}{$_} } sort keys %{$node->{'metadata'}{'annotations'}}),
     ]);
 }
 
-$cl->addRow('TOTAL', scalar @{$data->{'items'}}, $cpu, $mem, $pod, $gpu);
-$cl->addRow('USAGE', $node_usage, $cpu_usage, $mem_usage, $pod_usage, $gpu_usage);
+$cl->addRow('TOTAL', scalar @{$data->{'items'}}, $cpu, $mem, $pod, $storage);
+$cl->addRow('USAGE', $node_usage, $cpu_usage, $mem_usage, $pod_usage, $storage_usage);
 print $cl;
 print $tb;

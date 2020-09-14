@@ -11,7 +11,7 @@ function k.uc() {
   local ctxt_all=$(k config get-contexts | sed -e 1d | sed 's,\*,,' | awk '{print $1}')
 
   # Specific search first (starts with)
-  local ctxt=$(echo ${ctxt_all}| grep "^${q}" | head -n1)
+  local ctxt=$(echo ${ctxt_all} | grep "^${q}" | head -n1)
 
   # Generic search (contains)
   [ "${ctxt}x" = "x" ] && ctxt=$(echo ${ctxt_all} | grep "${q}" | head -n1)
@@ -27,7 +27,7 @@ function k.uc() {
 function k.ns() {
   [ -z ${1+x} ] && return 1
   local q=${1}
-  
+
   local ns_all=$(k get ns -ocustom-columns=NAME:.metadata.name --no-headers)
 
   local ns=$(echo ${ns_all} | grep "^${q}" | head -n1)
@@ -54,12 +54,12 @@ k.is_valid_object() {
   done
 }
 
-function k.ls () {
+function k.ls() {
   if [ $# -eq 0 ]; then
     k get pods
     return 0
   fi
-  
+
   local param=${1%/*}
 
   export KUBE_IS_OBJECT=0
@@ -172,9 +172,26 @@ function k.delstatus() {
 }
 
 function k.nh() {
-  k get nodes -o json \
-    | jq -r '.items[] | .metadata.name,(.status.conditions[] | .type,.status)' \
-    | awk '$1 ~ /^[a-z]/ { printf "\n%-50s", $1 } $1 ~ /^[A-Z]/ { printf "%-15s", $1 }' \
-    | sed 1d
+  k get nodes -o json |
+    jq -r '.items[] | .metadata.name,(.status.conditions[] | .type,.status)' |
+    awk '$1 ~ /^[a-z]/ { printf "\n%-50s", $1 } $1 ~ /^[A-Z]/ { printf "%-15s", $1 }' |
+    sed 1d
   echo
+}
+
+function k.ing() {
+  [ -z ${1+x} ] && return 1
+
+  local host="$1"
+  local namespace="${2:-ingress-nginx}"
+
+  k ingress-nginx \
+    -n "$namespace" \
+    conf \
+    --host "$host" \
+    --pod $(
+      k -n "$namespace" get po -l app.kubernetes.io/component=controller --no-headers |
+        head -1 |
+        awk '{print $1}'
+    )
 }

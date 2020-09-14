@@ -18,7 +18,7 @@ alias ktncpu="watch -t 'kubectl top nodes | sort -rnk3'"
 alias kpls="kubectl get pods --all-namespaces -o wide"
 alias kpall="watch -t 'kubectl get pods --all-namespaces -o wide'"
 alias kpnr="watch -t \"kubectl get pods --all-namespaces -o wide | grep -v ' Running '\""
-alias kpo="kubectl get pods --all-namespaces | sed 1d | awk '{print \$4}' | perl -ne 'chomp;\$data{\$_}++;END{printf \"%-20s \$data{\$_}\n\", \"\$_\" for sort keys %data};'"
+alias kpo="kubectl get pods --all-namespaces | sed 1d | awk '{print \$4}' | perl -ne 'chomp;\$data{\$_}++;END{printf \"%30s %6s\n\", \"\$_\", \"\$data{\$_}\" for sort keys %data};'"
 
 alias pxctl='kubectl -n kube-system exec -c portworx -ti $(kubectl -n kube-system get pods -l name=portworx -ocustom-columns=NAME:.metadata.name --no-headers | head -n1) -- /opt/pwx/bin/pxctl'
 
