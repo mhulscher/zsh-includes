@@ -72,16 +72,12 @@ function k.ls() {
   fi
 }
 
-function k.la() {
-  k.ls "$@"
-}
-
 function k.ll() {
-  k.ls "$@" --show-labels=true --output=wide
+  k.ls "$@" --output=wide
 }
 
-function k.lla() {
-  k.ls "$@" --show-labels=true --output=wide
+function k.lll() {
+  k.ll "$@" --show-labels
 }
 
 function k.nr() {
@@ -95,7 +91,7 @@ function k.wnr() {
 function k.wmaintenance() {
   context=""
   test ${1+x} && context="--context=${1}"
-  watch -t "kubectl ${context} version --short; echo; kubectl ${context} get nodes -o wide; echo; kubectl ${context} get po -o wide --all-namespaces | grep -vP '(\d+)/\1' | grep -v -e '\bError\b' -e Completed"
+  watch -t "kubectl ${context} version --short; echo; kubectl ${context} get nodes -o wide -L beta.kubernetes.io/instance-type,failure-domain.beta.kubernetes.io/zone; echo; kubectl ${context} get po -o wide --all-namespaces | grep -vP '(\d+)/\1' | grep -v -e '\bError\b' -e Completed"
 }
 
 function k.del() {
@@ -194,4 +190,14 @@ function k.ing() {
         head -1 |
         awk '{print $1}'
     )
+}
+
+function k.providerid() {
+  [ -z ${1+x} ] && return 1
+  k get node "$1" -o json | jq -r .spec.providerID | sed 's,.*/,,'
+}
+
+function k.ssm() {
+  [ -z ${1+x} ] && return 1
+  aws ssm start-session --target $(k.providerid "$1")
 }
