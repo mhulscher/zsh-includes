@@ -201,3 +201,61 @@ function k.ssm() {
   [ -z ${1+x} ] && return 1
   aws ssm start-session --target $(k.providerid "$1")
 }
+
+function k.ssma() {
+  # nodes="$(kubectl get nodes -o jsonpath="{.items[*].metadata.name}")"
+  # test $? -eq 0 || return
+
+  declare -a instanceIds=()
+
+  for node in $(kubectl get nodes -o jsonpath="{.items[*].metadata.name}"); do
+    instanceIds+=("$(k.providerid "$node")")
+  done
+
+  sessionName="eks-nodes-$(date "+%s")"
+  tmux new-session -d -s "$sessionName" "aws ssm start-session --target ${instanceIds[0]}"
+
+  for instanceId in "${instanceIds[@]}"; do
+    [ "$instanceId" = "${instanceIds[0]}" ] && continue
+    tmux split-window -t "$sessionName" "aws ssm start-session --target $instanceId"
+    tmux select-layout -t "$sessionName" "tiled"
+  done
+
+  tmux attach-session -t "$sessionName"
+  tmux select-layout -t "$sessionName" "tiled"
+  tmux set-window-option -t "$sessionName" synchronize-panes on
+}
+
+function k.sh() {
+  [ -z ${1+x} ] && return 1
+
+  local pod="$1"
+
+  [ ! -z ${2+x } ] && local container="--container=$2"
+
+  k exec -ti "$pod" "$container" -- sh
+}
+
+function k.portforward() {
+  local ns="$1"
+  local svc="$2"
+  local rport="$3"
+  local lport="$((($RANDOM % 65535) + 1024))"
+
+  k -n "$ns" port-forward "$svc" "$lport:$rport" &
+
+  for i in {1..20}; do
+    nc -z 127.0.0.1 "$lport" && break
+    sleep 1
+  done
+
+  xdg-open "http://127.0.0.1:$lport"
+}
+
+function k.prom() {
+  k.portforward kube-system svc/kube-prometheus-stack-prometheus 9090
+}
+
+function k.alert() {
+  k.portforward kube-system svc/kube-prometheus-stack-alertmanager 9093
+}
