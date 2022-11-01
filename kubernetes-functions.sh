@@ -1,14 +1,14 @@
-alias k=kubectl
+alias k=kubecolor
 alias m=minikube
 
 function k.lc() {
-  k config get-contexts
+  kubectl config get-contexts
 }
 
 function k.uc() {
   [ -z ${1+x} ] && return 1
   local q=${1}
-  local ctxt_all=$(k config get-contexts | sed -e 1d | sed 's,\*,,' | awk '{print $1}')
+  local ctxt_all=$(kubectl config get-contexts | sed -e 1d | sed 's,\*,,' | awk '{print $1}')
 
   # Specific search first (starts with)
   local ctxt=$(echo ${ctxt_all} | grep "^${q}" | head -n1)
@@ -21,14 +21,14 @@ function k.uc() {
     return 1
   fi
 
-  k config use-context ${ctxt}
+  kubectl config use-context ${ctxt}
 }
 
 function k.ns() {
   [ -z ${1+x} ] && return 1
   local q=${1}
 
-  local ns_all=$(k get ns -ocustom-columns=NAME:.metadata.name --no-headers)
+  local ns_all=$(kubectl get ns -ocustom-columns=NAME:.metadata.name --no-headers)
 
   local ns=$(echo ${ns_all} | grep "^${q}" | head -n1)
   [ "${ns}x" = "x" ] && ns=$(echo ${ns_all} | grep "${q}" | head -n1)
@@ -38,13 +38,13 @@ function k.ns() {
     return 1
   fi
 
-  k config set-context $(k config current-context) --namespace ${ns}
+  kubectl config set-context $(kubectl config current-context) --namespace ${ns}
 }
 
 k.is_valid_object() {
   [ -z ${1+x} ] && return 1
   local search=${1}
-  local objects=$(k get 2>&1 | grep -oP "(?<=\* )[a-z]+|(?<=aka ')[a-z]+" | tr '\n' ' ')
+  local objects=$(kubectl get 2>&1 | grep -oP "(?<=\* )[a-z]+|(?<=aka ')[a-z]+" | tr '\n' ' ')
 
   for object in $(echo ${objects}); do
     if [ ${object} = ${search} ]; then
@@ -56,7 +56,7 @@ k.is_valid_object() {
 
 function k.ls() {
   if [ $# -eq 0 ]; then
-    k get pods
+    kubectl get pods
     return 0
   fi
 
@@ -66,9 +66,9 @@ function k.ls() {
   k.is_valid_object ${param}
 
   if [ ${KUBE_IS_OBJECT} -eq 1 ]; then
-    k get "$@"
+    kubectl get "$@"
   else
-    k get pods "$@"
+    kubectl get pods "$@"
   fi
 }
 
@@ -85,13 +85,13 @@ function k.nr() {
 }
 
 function k.wnr() {
-  watch -t 'kubectl get pods --all-namespaces --output=wide | grep -vP "\b(\d+)/\1\b" | grep -ve "\bError\b" -e Completed'
+  watch -t 'kubectl get pods --all-namespaces --output=wide | grep -vP "\b(\d+)/\1\b" | grep -v -e '\bError\b' -e Completed -e Evicted -e OutOfcpu -e OutOfmemory'
 }
 
 function k.wmaintenance() {
   context=""
   test ${1+x} && context="--context=${1}"
-  watch -t "kubectl ${context} version --short; echo; kubectl ${context} get nodes -o wide -L beta.kubernetes.io/instance-type,failure-domain.beta.kubernetes.io/zone; echo; kubectl ${context} get po -o wide --all-namespaces | grep -vP '(\d+)/\1' | grep -v -e '\bError\b' -e Completed"
+  watch -t "kubectl ${context} version --short; echo; kubectl ${context} get nodes -o wide -L node.kubernetes.io/instance-type,kubernetes.io/os,kubernetes.io/arch,topology.kubernetes.io/zone,kpn.org/role,kpn.org/lifecycle,nvidia.com/gpu; echo; kubectl ${context} get po -o wide --all-namespaces | grep -vP '(\d+)/\1' | grep -v -e '\bError\b' -e Completed -e Evicted -e OutOfcpu -e OutOfmemory"
 }
 
 function k.del() {
@@ -100,7 +100,7 @@ function k.del() {
   echo -n "Do you really want to 'kubectl delete $@'? [yn] "
   read reply
 
-  [ ${reply} = "y" ] && k delete "$@"
+  [ ${reply} = "y" ] && kubectl delete "$@"
 }
 
 function k.delr() {
@@ -134,7 +134,7 @@ function k.delr() {
     local index=1
     for pod in $(echo ${pods} | awk '{print $1}'); do
       echo -e "\nDeleting pod (${index}/${count}): ${pod}"
-      k delete pods ${pod}
+      kubectl delete pods ${pod}
       sleep 1
       while true; do
         local new_pods=$(k.ls | grep "^${search}")
@@ -168,7 +168,7 @@ function k.delstatus() {
 }
 
 function k.nh() {
-  k get nodes -o json |
+  kubectl get nodes -o json |
     jq -r '.items[] | .metadata.name,(.status.conditions[] | .type,.status)' |
     awk '$1 ~ /^[a-z]/ { printf "\n%-50s", $1 } $1 ~ /^[A-Z]/ { printf "%-15s", $1 }' |
     sed 1d
@@ -181,7 +181,7 @@ function k.ing() {
   local host="$1"
   local namespace="${2:-ingress-nginx}"
 
-  k ingress-nginx \
+  kubectl ingress-nginx \
     -n "$namespace" \
     conf \
     --host "$host" \
@@ -194,7 +194,20 @@ function k.ing() {
 
 function k.providerid() {
   [ -z ${1+x} ] && return 1
-  k get node "$1" -o json | jq -r .spec.providerID | sed 's,.*/,,'
+  kubectl get node "$1" -o json | jq -r .spec.providerID | sed 's,.*/,,'
+}
+
+function k.ec2terminate {
+  [ -z ${1+x} ] && return 1
+  kubectl drain "$1" --ignore-daemonsets --delete-emptydir-data --force --timeout 5m
+  sleep 10
+  aws ec2 terminate-instances --instance-ids "$(k.providerid "$1")"
+}
+
+function k.ec2replaceall {
+  for node in $(kubectl get nodes -o jsonpath="{.items[*].metadata.name}" -l "eks.amazonaws.com/compute-type notin (fargate)"); do
+    k.ec2terminate "$node"
+  done
 }
 
 function k.ssm() {
@@ -233,7 +246,7 @@ function k.sh() {
 
   [ ! -z ${2+x } ] && local container="--container=$2"
 
-  k exec -ti "$pod" "$container" -- sh
+  kubectl exec -ti "$pod" "$container" -- sh
 }
 
 function k.portforward() {
