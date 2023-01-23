@@ -22,7 +22,7 @@ $cl->setCols(qw(- NODES CPU MEM POD STORAGE));
 $cl->setOptions(headingText => 'Cluster Resources');
 
 my $tb = Text::ASCIITable->new();
-$tb->setCols('Node','Capacity','Labels','Annotations');
+$tb->setCols('Node','Capacity','Labels','Annotations','Taints');
 $tb->setOptions(drawRowLine => 1);
 
 my $nodes = 0;
@@ -47,6 +47,7 @@ foreach my $node (@{$data->{'items'}}) {
       "STO: " . (map { s/Ki$//; nearest(0.1, $_ / 1048576) . "Gi" } $node->{'status'}{'capacity'}{'ephemeral-storage'})[0] . "\n" ,
       join("\n", map { "$_: " . $node->{'metadata'}{'labels'}{$_} } sort keys %{$node->{'metadata'}{'labels'}}),
       join("\n", map { "$_: " . $node->{'metadata'}{'annotations'}{$_} } sort keys %{$node->{'metadata'}{'annotations'}}),
+      join("\n", map { $_->{'key'} . "=" . ($_->{'value'} || "") . ":" . ($_->{'effect'} || "") } @{$node->{'spec'}{'taints'}}),
     ]);
 }
 
