@@ -91,7 +91,7 @@ function k.wnr() {
 function k.wmaintenance() {
   context=""
   test ${1+x} && context="--context=${1}"
-  watch -t "kubectl ${context} version --short 2>/dev/null; echo; kubectl ${context} get nodes -o wide -L node.kubernetes.io/instance-type,kubernetes.io/os,kubernetes.io/arch,topology.kubernetes.io/zone,node.kubernetes.io/role,nvidia.com/gpu; echo; kubectl ${context} get po -o wide --all-namespaces | grep -vP '(\d+)/\1' | grep -v -e '\bError\b' -e Completed -e Evicted -e OutOfcpu -e OutOfmemory"
+  watch -t "kubectl ${context} version --short 2>/dev/null; echo; kubectl ${context} get nodes -o wide -L node.kubernetes.io/instance-type,kubernetes.io/arch,topology.kubernetes.io/zone,karpenter.sh/capacity-type,nvidia.com/gpu | sed 's,\(.\+\)\s\+\(EXTERNAL-IP\s\+\|<none>\s\+\),\1,g'; echo; kubectl ${context} get po -o wide --all-namespaces | grep -vP '(\d+)/\1' | grep -v -e '\bError\b' -e Completed -e Evicted -e OutOfcpu -e OutOfmemory"
 }
 
 function k.del() {
